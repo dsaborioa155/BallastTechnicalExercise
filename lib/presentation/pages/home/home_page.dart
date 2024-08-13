@@ -27,7 +27,7 @@ class HomePageState extends State<HomePage> {
   void _filterPokemon(String query, List<dynamic> pokemonData) {
     if (pokemonData.isNotEmpty) {
       final filtered = pokemonData.where((pokemon) {
-        final name = pokemon['show']['name'].toLowerCase();
+        final name = pokemon['show']?['name']?.toLowerCase() ?? '';
         return name.contains(query.toLowerCase());
       }).toList();
 
@@ -48,7 +48,6 @@ class HomePageState extends State<HomePage> {
       ],
       child: BlocConsumer<PokemonBloc, PokemonState>(
         listener: (context, state) {
-          // Update the filtered data when the state changes
           if (state.pokemonData.isNotEmpty) {
             setState(() {
               filteredPokemonData = state.pokemonData;
@@ -75,20 +74,34 @@ class HomePageState extends State<HomePage> {
                         : GridView.builder(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, // Number of columns
-                              crossAxisSpacing: 16.0, // Space between columns
-                              mainAxisSpacing: 16.0, // Space between rows
-                              childAspectRatio:
-                                  0.8, // Adjust height-width ratio
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16.0,
+                              mainAxisSpacing: 16.0,
+                              childAspectRatio: 0.8,
                             ),
                             itemCount: filteredPokemonData.length,
                             itemBuilder: (context, index) {
+                              final pokemon = filteredPokemonData[index];
+                              final name = pokemon?['show']?['name'] ??
+                                  'Unknown Pokémon';
+                              final imageUrl =
+                                  pokemon?['show']?['image']?['medium'] ?? '';
+
                               return GestureDetector(
                                 onTap: () {
-                                  context.router.push(PokemonDetailsRoute(
-                                      id: filteredPokemonData[index]["show"]
-                                              ["id"]
-                                          .toString()));
+                                  final id =
+                                      pokemon?["show"]?["id"]?.toString();
+                                  if (id != null && id.isNotEmpty) {
+                                    context.router.push(
+                                      PokemonDetailsRoute(id: id),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Invalid Pokémon ID'),
+                                      ),
+                                    );
+                                  }
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -112,23 +125,41 @@ class HomePageState extends State<HomePage> {
                                             topLeft: Radius.circular(10.0),
                                             topRight: Radius.circular(10.0),
                                           ),
-                                          child: Image.network(
-                                            filteredPokemonData[index]["show"]
-                                                ["image"]["medium"],
-                                            fit: BoxFit.cover,
-                                          ),
+                                          child: imageUrl.isNotEmpty
+                                              ? Image.network(
+                                                  imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error,
+                                                      stackTrace) {
+                                                    return const Center(
+                                                      child: Icon(
+                                                        Icons.broken_image,
+                                                        size: 50,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    );
+                                                  },
+                                                )
+                                              : const Center(
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                    size: 50,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
                                         ),
                                       ),
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
-                                          filteredPokemonData[index]["show"]
-                                              ["name"],
+                                          name,
                                           style: const TextStyle(
                                             fontSize: 16.0,
                                             fontWeight: FontWeight.bold,
                                           ),
                                           textAlign: TextAlign.center,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
                                         ),
                                       ),
                                     ],

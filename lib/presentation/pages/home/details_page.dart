@@ -24,16 +24,22 @@ class PokemonDetailsPage extends StatelessWidget {
           listener: (context, state) {},
           builder: (context, state) {
             final pokemonDetails = state.pokemonDetailData;
+
             if (pokemonDetails.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
+
+            final imageUrl = pokemonDetails['image']?['medium'] ?? '';
+            final name = pokemonDetails['name'] ?? 'Unknown Pokémon';
+            final description =
+                pokemonDetails['summary'] ?? 'No description available.';
+
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Pokémon Image
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16.0),
@@ -47,18 +53,33 @@ class PokemonDetailsPage extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16.0),
-                        child: Image.network(
-                          pokemonDetails['image']['medium'] ??
-                              "", // Replace with correct path
-                          height: 300,
-                          fit: BoxFit.cover,
-                        ),
+                        child: imageUrl.isNotEmpty
+                            ? Image.network(
+                                imageUrl,
+                                height: 300,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 100,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: 100,
+                                  color: Colors.grey,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 24.0),
-                    // Pokémon Name
                     Text(
-                      pokemonDetails['name'] ?? "", // Replace with correct path
+                      name,
                       style: const TextStyle(
                         fontSize: 28.0,
                         fontWeight: FontWeight.bold,
@@ -67,10 +88,8 @@ class PokemonDetailsPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16.0),
-                    // Pokémon Description
                     Text(
-                      pokemonDetails['summary'] ??
-                          "", // Replace with correct path
+                      description,
                       style: const TextStyle(
                         fontSize: 16.0,
                         color: Colors.black54,
